@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Services\AI\Providers\OpenAI\Connectors;
+namespace App\AIHub\Connectors;
 
-use App\Services\AI\Support\ConfigResolver;
+use App\AIHub\Support\ConfigResolver;
 
 final class HttpConnector
 {

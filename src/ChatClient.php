@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Services\AI\Providers\OpenAI;
+namespace App\AIHub;
 
-use App\Services\AI\Providers\OpenAI\Connectors\HttpConnector;
+use App\AIHub\Connectors\HttpConnector;
 
 /**
  * Minimal chat client for OpenAI-compatible APIs.

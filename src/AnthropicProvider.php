@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Services\AI\Providers\Anthropic;
+namespace App\AIHub;
 
-use App\Services\AI\Providers\ProviderContract;
+use App\AIHub\ProviderContract;
+use App\AIHub\Support\ConfigResolver;
 
-use App\Services\AI\Support\ConfigResolver;
-
-final class Provider implements ProviderContract
+final class AnthropicProvider implements ProviderContract
 {
     private ConfigResolver $config;
 

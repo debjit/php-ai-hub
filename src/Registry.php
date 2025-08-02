@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpAiHub\Base;
+namespace App\AIHub;
 
 final class Registry
 {

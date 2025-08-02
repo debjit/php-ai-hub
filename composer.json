@@ -1,6 +1,6 @@
 {
   "name": "debjit/php-ai-hub",
-  "description": "AI HTTP Service Installer (no-SDK) for Laravel: copy/paste provider stubs via Composer plugin events with JSON registry.",
+  "description": "Portable AI Hub for Laravel. No vendor, no hassle. Just drop in and use.",
   "type": "composer-plugin",
   "license": "MIT",
   "authors": [
@@ -16,7 +16,7 @@
   },
   "autoload": {
     "psr-4": {
-      "PhpAiHub\\Base\\": "src/"
+      "PhpAiHub\\Package\\": "src/"
     }
   },
   "autoload-dev": {
@@ -25,22 +25,7 @@
     }
   },
   "extra": {
-    "class": "PhpAiHub\\Base\\Installer",
-    "ai-sdk": {
-      "providers": {
-        "openai": "src/Stubs/OpenAI",
-        "anthropic": "src/Stubs/Anthropic"
-      },
-      "target": "app/AI/Providers"
-    }
-  },
-  "scripts": {
-    "post-install-cmd": [
-      "PhpAiHub\\Base\\Installer::handleComposerEvent"
-    ],
-    "post-update-cmd": [
-      "PhpAiHub\\Base\\Installer::handleComposerEvent"
-    ]
+    "class": "PhpAiHub\\Package\\Composer\\AIHubPlugin"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
