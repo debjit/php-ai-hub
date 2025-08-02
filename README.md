@@ -1,271 +1,234 @@
-# PHP AI Hub (Laravel) — Use AI providers without their SDKs
+# PHP AI Hub (shadcn-style installer for Laravel)
 
-A lightweight Laravel package that provides a unified way to call AI providers (like OpenAI and Anthropic) using simple HTTP connectors and provider stubs — no vendor SDKs required.
+Portable AI provider scaffolding for Laravel – no SDK lock-in, no vendor abstractions. Install once, then pull concrete provider code directly into your app like shadcn/ui.
 
-This package focuses on:
-- Simple configuration per provider
-- Minimal surface area to call common AI endpoints (e.g., chat/completions)
-- Extensibility to add new providers without pulling their full SDKs
+## Features
+
+- Composer plugin that adds:
+  - `composer ai-hub:add <provider>` (install provider into your app)
+  - `composer ai-hub:remove <provider>` (remove provider from your app)
+- Copies real PHP source files into `app/AIHub` (not used from vendor)
+- Copies provider configs into `config/ai-hub`
+- Optional tests copying
+- Tracks installed providers in `ai-hub.json`
+
+Supported providers out of the box:
+- `openai` (default)
+- `anthropic`
+
+More providers can be added by contributing stubs under `stubs/providers/<name>`.
+
+---
 
 ## Requirements
 
 - PHP 8.2+
-- Laravel 10 or 11
-- Composer
+- Laravel (tested with 10/11)
+- Composer 2.x
+
+---
 
 ## Installation
 
-```bash
+1) Require the package:
+
+```
 composer require debjit/php-ai-hub
 ```
 
-Laravel package discovery should auto-register the service provider.
+2) Add the default provider (OpenAI):
 
-## Publish Configuration
-
-```bash
-php artisan vendor:publish --provider="Debjit\PhpAiHub\Installer" --tag=ai-hub-config
+```
+composer ai-hub:add openai
 ```
 
-This will publish:
-- `config/ai-hub.php` — main hub config
-- `config/ai-hub/openai.php` — OpenAI-specific config
-- `config/ai-hub/anthropic.php` — Anthropic-specific config
+This will copy:
+- App classes into `app/AIHub/`
+- Config files into `config/ai-hub/`
+- Registry at project root: `ai-hub.json`
 
-If these files already exist, review and merge as needed.
+To add another provider later:
 
-## Environment Variables
-
-Set the required keys for the providers you intend to use.
-
-OpenAI:
 ```
-OPENAI_API_KEY=sk-...
-OPENAI_BASE_URL=https://api.openai.com
-OPENAI_ORG_ID=org_...(optional)
-OPENAI_PROJECT_ID=proj_...(optional)
+composer ai-hub:add anthropic
 ```
 
-Anthropic:
+Options (add):
+- `--force` Overwrite existing files
+- `--tests` Copy tests if present in provider stubs
+
+Examples (add):
+
 ```
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_BASE_URL=https://api.anthropic.com
-ANTHROPIC_VERSION=2023-06-01
+composer ai-hub:add openai --force
+composer ai-hub:add anthropic --tests
 ```
 
-You can override the base URLs to route through proxies/gateways if needed.
+Remove a provider:
 
-## Configuration Overview
+```
+composer ai-hub:remove openai
+composer ai-hub:remove anthropic -f
+```
 
-Main hub configuration: `config/ai-hub.php`
-- Controls default provider and maps provider identifiers to resolver classes and stub implementations.
+Notes on remove:
+- Only provider-specific files/configs are removed (e.g., app/AIHub/* from that provider, config/ai-hub/{provider}.php).
+- Shared config file config/ai-hub/ai-hub.php is not removed.
+- After removal, empty directories under app/AIHub and config/ai-hub are cleaned up.
+- The registry file ai-hub.json is updated to drop the provider entry.
 
-Example (high-level):
+---
+
+## What gets installed
+
+By default, for OpenAI:
+
+App code (copied into your project)
+- `app/AIHub/ProviderContract.php`
+- `app/AIHub/Support/ConfigResolver.php`
+- `app/AIHub/OpenAIProvider.php`
+- `app/AIHub/ChatClient.php`
+- `app/AIHub/Connectors/HttpConnector.php`
+
+Config
+- `config/ai-hub/ai-hub.php` (base)
+- `config/ai-hub/openai.php` (OpenAI-specific)
+
+Anthropic adds:
+- `app/AIHub/AnthropicProvider.php`
+- `config/ai-hub/anthropic.php`
+
+Note: files are copied to your app. You fully own and modify them.
+
+---
+
+## Configuration
+
+The base config lives in:
+- `config/ai-hub/ai-hub.php`
+
+Default driver:
+```
+'default' => env('AI_DEFAULT', 'openai')
+```
+
+OpenAI config (`config/ai-hub/openai.php`):
+- `AI_OPENAI_BASE_URL` (default: `https://api.openai.com/v1`)
+- `AI_OPENAI_API_KEY`
+- `AI_OPENAI_HEADERS` (JSON or associative array)
+- `AI_OPENAI_CHAT_PATH` (default: `/chat/completions`)
+- `AI_OPENAI_TIMEOUT` (default: `60`)
+- `AI_OPENAI_DEFAULT_MODEL` (default: `gpt-4o-mini`)
+
+Anthropic config (`config/ai-hub/anthropic.php`):
+- `AI_ANTHROPIC_BASE_URL` (default: `https://api.anthropic.com`)
+- `AI_ANTHROPIC_API_KEY`
+- `AI_ANTHROPIC_HEADERS` (JSON or associative array)
+- `AI_ANTHROPIC_MESSAGES_PATH` (default: `/v1/messages`)
+- `AI_ANTHROPIC_TIMEOUT` (default: `60`)
+- `AI_ANTHROPIC_DEFAULT_MODEL` (default: `claude-3-haiku`)
+
+---
+
+## Basic usage example
+
+Resolve config and call OpenAI chat:
+
 ```php
-return [
-    'default' => env('AI_HUB_DEFAULT_PROVIDER', 'openai'),
+use App\AIHub\Support\ConfigResolver;
+use App\AIHub\Connectors\HttpConnector;
+use App\AIHub\ChatClient;
 
-    'providers' => [
-        'openai' => [
-            'config' => base_path('config/ai-hub/openai.php'),
-            'provider' => \Debjit\PhpAiHub\Stubs\OpenAI\Provider::class,
-        ],
-        'anthropic' => [
-            'config' => base_path('config/ai-hub/anthropic.php'),
-            'provider' => \Debjit\PhpAiHub\Stubs\Anthropic\Provider::class,
-        ],
-    ],
-];
-```
+$config = new ConfigResolver('ai-hub');
+$http = new HttpConnector($config);
+$chat = new ChatClient($http);
 
-Per-provider configuration:
-- `config/ai-hub/openai.php` contains base URL, auth header strategy, default model, timeouts, etc.
-- `config/ai-hub/anthropic.php` contains base URL, version header, default model, timeouts, etc.
-
-How config is resolved:
-- `Debjit\PhpAiHub\Support\ConfigResolver` reads the main hub config, then loads the targeted provider config file.
-- Environment variables are read via Laravel `env()` in those configs.
-- Missing or invalid configurations will throw descriptive exceptions early.
-
-## Core Concepts
-
-- Registry: `Debjit\PhpAiHub\Registry`
-  - Entry point to get a provider instance by key (e.g., "openai", "anthropic") or the default.
-- Provider Stub: `Debjit\PhpAiHub\Stubs\{Provider}\Provider`
-  - Facade-like API that exposes high-level operations (e.g., chat).
-- Client/Connector: `Debjit\PhpAiHub\Stubs\{Provider}\Connectors\HttpConnector`
-  - Responsible for HTTP requests to the provider with proper headers, endpoints, and payload shape.
-
-You don’t install SDKs for each provider: we model the minimal HTTP required.
-
-## Quick Start
-
-Resolve the default provider (configured via `AI_HUB_DEFAULT_PROVIDER` or `config/ai-hub.php`):
-
-```php
-use Debjit\PhpAiHub\Registry;
-
-$provider = app(Registry::class)->provider(); // default from config
-```
-
-Or explicitly:
-
-```php
-$openai = app(Registry::class)->provider('openai');
-$anthropic = app(Registry::class)->provider('anthropic');
-```
-
-### Example: OpenAI Chat Completion
-
-```php
-use Debjit\PhpAiHub\Registry;
-
-$openai = app(Registry::class)->provider('openai');
-
-$response = $openai->chat()->create([
-    'model' => 'gpt-4o-mini',
-    'messages' => [
-        ['role' => 'system', 'content' => 'You are a helpful assistant.'],
-        ['role' => 'user', 'content' => 'Write a haiku about Laravel.'],
-    ],
-    'temperature' => 0.7,
+$response = $chat->chat([
+    ['role' => 'user', 'content' => 'Hello AI!'],
+], [
+    // optional overrides:
+    // 'model' => 'gpt-4o-mini',
+    // 'base_url' => 'https://api.openai.com/v1',
+    // 'api_key' => 'sk-...',
+    // 'headers' => ['X-Org' => 'acme'],
 ]);
 
-$content = $response['choices'][0]['message']['content'] ?? null;
-```
-
-Notes:
-- The stub normalizes the request to OpenAI’s `/v1/chat/completions`.
-- Auth header `Authorization: Bearer {OPENAI_API_KEY}` is added by the connector.
-
-### Example: Anthropic Messages
-
-```php
-use Debjit\PhpAiHub\Registry;
-
-$anthropic = app(Registry::class)->provider('anthropic');
-
-$response = $anthropic->chat()->create([
-    'model' => 'claude-3-5-sonnet-20240620',
-    'messages' => [
-        ['role' => 'user', 'content' => 'Summarize Laravel service providers.'],
-    ],
-    'max_tokens' => 512,
-]);
-
-$content = $response['content'][0]['text'] ?? null;
-```
-
-Notes:
-- The stub targets Anthropic’s `/v1/messages` with headers:
-  - `x-api-key: {ANTHROPIC_API_KEY}`
-  - `anthropic-version: {ANTHROPIC_VERSION}`
-
-### Streaming (if supported)
-
-If a provider supports streaming, the stub may expose a streaming method:
-
-```php
-$stream = $openai->chat()->stream([
-    'model' => 'gpt-4o-mini',
-    'messages' => [/*...*/],
-]);
-
-foreach ($stream as $event) {
-    // handle tokens/chunks
+if ($response['error'] !== null) {
+    logger()->error('AI Error', $response);
+} else {
+    // $response contains:
+    // ['status' => int, 'headers' => array, 'body' => array|null, 'raw' => string, 'error' => null]
+    dd($response);
 }
 ```
 
-Refer to the specific provider stub for supported features.
-
-## Service Container Usage
-
-You can type-hint the registry wherever needed:
+Switch default provider to Anthropic in `config/ai-hub/ai-hub.php`:
 
 ```php
-use Debjit\PhpAiHub\Registry;
+'default' => 'anthropic',
+```
 
-class MyController
+Then consume its config via `ConfigResolver('ai-hub')` and build your client accordingly.
+
+---
+
+## Installed providers registry
+
+The command writes to `ai-hub.json` at the project root:
+
+```json
 {
-    public function __construct(private Registry $registry) {}
-
-    public function __invoke()
-    {
-        $ai = $this->registry->provider(); // default
-        // ...
-    }
+  "providers": {
+    "openai": { "installed_at": "2025-08-02T12:34:56+00:00" },
+    "anthropic": { "installed_at": "2025-08-02T12:35:10+00:00" }
+  }
 }
 ```
 
-## Adding a New Provider
+You can safely delete entries if you manually remove copied files.
 
-1) Create a provider config: `config/ai-hub/{provider}.php`
-   - Base URL, auth headers, defaults, timeouts/retries.
+---
 
-2) Implement a connector:
-   - Example: `src/Stubs/FooAI/Connectors/HttpConnector.php`
-   - Use Laravel HTTP client, apply headers and base URL from config.
-   - Provide methods like `chatCompletions(array $payload): array`.
+## Updating scaffolded code
 
-3) Implement a provider stub:
-   - Example: `src/Stubs/FooAI/Provider.php`
-   - Expose simplified methods, like `chat()->create($payload)` that internally calls the connector.
-   - Keep the public API consistent with existing providers when possible.
+Because code is copied into your app, future updates will not overwrite local changes unless you pass `--force`.
 
-4) Register in main config:
-   - In `config/ai-hub.php` add the mapping:
-     ```php
-     'providers' => [
-         // ...
-         'fooai' => [
-             'config' => base_path('config/ai-hub/fooai.php'),
-             'provider' => \Debjit\PhpAiHub\Stubs\FooAI\Provider::class,
-         ],
-     ],
-     ```
+- To refresh provider code from the latest stubs:
+  ```
+  composer update debjit/php-ai-hub
+  composer ai-hub:add openai --force
+  ```
 
-5) Use it:
-   ```php
-   $foo = app(\Debjit\PhpAiHub\Registry::class)->provider('fooai');
-   $foo->chat()->create([...]);
-   ```
+---
 
-Guidelines:
-- Do not use the provider’s official SDK. Prefer HTTP with minimal dependencies.
-- Normalize payloads where possible to keep your app code portable between providers.
+## Adding tests
 
-## Error Handling & Troubleshooting
+If a provider includes tests under its stubs, you can copy them with:
 
-- Missing API key or base URL
-  - Ensure `.env` variables are set and the provider config reads them via `env()`.
+```
+composer ai-hub:add openai --tests
+```
 
-- Invalid provider key
-  - Confirm the provider key exists in `config/ai-hub.php` under `providers`.
+They will be placed under your project's `tests/` directory, following the stub structure.
 
-- HTTP errors (4xx/5xx)
-  - The connector will return the response or throw exceptions based on your implementation. Check your timeouts and retry logic in the provider config.
+---
 
-- Config resolution issues
-  - `Debjit\PhpAiHub\Support\ConfigResolver` loads `config/ai-hub.php`, validates provider entry, and then loads the provider’s own config. If paths or classes are wrong, you’ll get descriptive exceptions.
+## Notes
 
-## Testing
+- IDE warnings about `env()` / `config()` undefined in the stubs while in the package are expected. Once copied into a Laravel app, these helpers exist.
+- The plugin does not auto-run any post-install script by default to avoid side effects. If you want OpenAI auto-installed on `composer require`, we can add a hook to run `ai-hub:add openai` automatically.
 
-- Mock the connector classes and assert payload shapes.
-- For integration tests, set fake API keys and use Laravel’s HTTP fake to simulate provider responses.
+---
 
-## Security
+## Roadmap
 
-- Never log raw API keys or entire request/response bodies containing sensitive data.
-- Prefer setting keys in `.env` and referencing via config files.
+- More providers (Google, Azure OpenAI, Mistral, etc.)
+- Optional E2E stub tests and example controllers
+- Remove/provider command (uninstall) ✔️
+- Update/merge strategy for local modifications
 
-## Versioning
-
-Follow semantic versioning (SemVer). Breaking changes will bump the major version.
+---
 
 ## License
 
-MIT License. See LICENSE file.
-
-## Credits
-
-Crafted for teams that prefer HTTP-first integrations with AI providers in Laravel without heavyweight SDKs.
+MIT

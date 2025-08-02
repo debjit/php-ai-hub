@@ -6,6 +6,7 @@ namespace PhpAiHub\Package\Composer;
 
 use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
 use PhpAiHub\Package\Console\AddProviderCommand;
+use PhpAiHub\Package\Console\RemoveProviderCommand;
 
 final class CommandProvider implements CommandProviderCapability
 {
@@ -13,6 +14,7 @@ final class CommandProvider implements CommandProviderCapability
     {
         return [
             new AddProviderCommand(),
+            new RemoveProviderCommand(),
         ];
     }
 }
