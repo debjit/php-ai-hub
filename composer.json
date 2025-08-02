@@ -1,0 +1,48 @@
+{
+  "name": "php-ai-hub/base",
+  "description": "AI HTTP Service Installer (no-SDK) for Laravel: copy/paste provider stubs via Composer plugin events with JSON registry.",
+  "type": "composer-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "AI HTTP Service Installer",
+      "email": "hi@debjit.in"
+    }
+  ],
+  "require": {
+    "php": "^8.2 || ^8.3",
+    "composer-plugin-api": "^2.2",
+    "symfony/filesystem": "^6.0 || ^7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "PHPNotAISDK\\Base\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "PHPNotAISDK\\Base\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "class": "PHPNotAISDK\\Base\\Installer",
+    "ai-sdk": {
+      "providers": {
+        "openai": "src/Stubs/OpenAI",
+        "anthropic": "src/Stubs/Anthropic"
+      },
+      "target": "app/AI/Providers"
+    }
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "PHPNotAISDK\\Base\\Installer::handleComposerEvent"
+    ],
+    "post-update-cmd": [
+      "PHPNotAISDK\\Base\\Installer::handleComposerEvent"
+    ]
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "keywords": ["ai", "sdk", "no-sdk", "laravel", "composer-plugin"]
+}
