@@ -42,7 +42,7 @@
       "PhpAiHub\\Base\\Installer::handleComposerEvent"
     ]
   },
-  "minimum-stability": "stable",
+  "minimum-stability": "dev",
   "prefer-stable": true,
   "keywords": ["ai", "sdk", "no-sdk", "laravel", "composer-plugin"]
 }
