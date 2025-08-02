@@ -16,16 +16,16 @@
   },
   "autoload": {
     "psr-4": {
-      "PHPNotAISDK\\Base\\": "src/"
+      "PhpAiHub\\Base\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "PHPNotAISDK\\Base\\Tests\\": "tests/"
+      "PhpAiHub\\Base\\Tests\\": "tests/"
     }
   },
   "extra": {
-    "class": "PHPNotAISDK\\Base\\Installer",
+    "class": "PhpAiHub\\Base\\Installer",
     "ai-sdk": {
       "providers": {
         "openai": "src/Stubs/OpenAI",
@@ -36,10 +36,10 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "PHPNotAISDK\\Base\\Installer::handleComposerEvent"
+      "PhpAiHub\\Base\\Installer::handleComposerEvent"
     ],
     "post-update-cmd": [
-      "PHPNotAISDK\\Base\\Installer::handleComposerEvent"
+      "PhpAiHub\\Base\\Installer::handleComposerEvent"
     ]
   },
   "minimum-stability": "stable",

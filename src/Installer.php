@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPNotAISDK\Base;
+namespace PhpAiHub\Base;
 
 use Composer\Composer;
 use Composer\EventDispatcher\EventSubscriberInterface;

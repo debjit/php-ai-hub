@@ -16,7 +16,7 @@ This package focuses on:
 ## Installation
 
 ```bash
-composer require debjit/phph-ai-hub
+composer require debjit/php-ai-hub
 ```
 
 Laravel package discovery should auto-register the service provider.

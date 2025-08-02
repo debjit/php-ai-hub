@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PHPNotAISDK\Base;
+namespace PhpAiHub\Base;
 
 final class Registry
 {
