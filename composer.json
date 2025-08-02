@@ -1,5 +1,5 @@
 {
-  "name": "php-ai-hub/base",
+  "name": "debjit/php-ai-hub",
   "description": "AI HTTP Service Installer (no-SDK) for Laravel: copy/paste provider stubs via Composer plugin events with JSON registry.",
   "type": "composer-plugin",
   "license": "MIT",
