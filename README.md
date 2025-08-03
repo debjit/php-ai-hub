@@ -29,6 +29,12 @@ composer config allow-plugins.debjit/php-ai-hub true
 
 2) Require the package as a dev dependency (DEV ONLY)
 
+Use --dev so it is only installed for development:
+```
+composer require --dev debjit/php-ai-hub
+```
+
+If you need to target the development branch explicitly (e.g., before a tagged release):
 ```
 composer require --dev debjit/php-ai-hub:dev-main
 ```
