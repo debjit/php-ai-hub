@@ -209,7 +209,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\AIHub\ChatClient;
-use App\AIHub\Support\ConfigResolver;
+use App\AIHub\Connectors\HttpConnector;
 
 class AiHubExampleCommand extends Command
 {
@@ -220,17 +220,17 @@ class AiHubExampleCommand extends Command
     {
         $this->info('Running AI Hub example...');
 
-        // Resolve provider from config/ai-hub/ai-hub.php
-        $provider = ConfigResolver::resolveProvider();
+        // The HttpConnector will resolve config from your .env or config/ai-hub files
+        $http = new HttpConnector();
 
-        // Create ChatClient with the resolved provider
-        $client = new ChatClient($provider);
+        // Create the ChatClient
+        $client = new ChatClient($http);
 
         // Static prompt for testing
-        $prompt = 'Say hello in one short sentence.';
+        $messages = [['role' => 'user', 'content' => 'Say hello in one short sentence.']];
 
-        // Perform a static chat request (implementation depends on the stub you copied)
-        $response = $client->chat($prompt);
+        // Perform a static chat request
+        $response = $client->chat($messages);
 
         $this->line('Response:');
         $this->line((string) $response);
@@ -264,20 +264,20 @@ Add to `routes/web.php`:
 
 use Illuminate\Support\Facades\Route;
 use App\AIHub\ChatClient;
-use App\AIHub\Support\ConfigResolver;
+use App\AIHub\Connectors\HttpConnector;
 
 Route::get('/ai-example', function () {
-    // Resolve provider from config
-    $provider = ConfigResolver::resolveProvider();
+    // The HttpConnector will resolve config from your .env or config/ai-hub files
+    $http = new HttpConnector();
 
-    // Create ChatClient with the resolved provider
-    $client = new ChatClient($provider);
+    // Create the ChatClient
+    $client = new ChatClient($http);
 
     // Static prompt for demo
-    $prompt = 'Return a JSON object: {"hello":"world"}';
+    $messages = [['role' => 'user', 'content' => 'Return a JSON object: {"hello":"world"}']];
 
     // Perform a chat request
-    $response = $client->chat($prompt);
+    $response = $client->chat($messages);
 
     // Return plain text for quick verification
     return response((string) $response, 200, ['Content-Type' => 'text/plain']);
@@ -288,7 +288,7 @@ Visit: http://localhost:8000/ai-example (or your app URL)
 
 Notes:
 - The default config is under `config/ai-hub/`. Ensure appropriate environment variables (e.g., OPENAI_API_KEY) if your stub/provider requires them.
-- The `App\AIHub\ChatClient` and `ConfigResolver` classes come from the exported stubs and may perform simple HTTP calls via `App\AIHub\Connectors\HttpConnector`.
+- The `App\AIHub\ChatClient` and `HttpConnector` classes come from the exported stubs.
 - The example uses static strings to make copy-paste testing trivial.
 
 ## Available Providers
