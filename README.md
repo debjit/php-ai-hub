@@ -2,13 +2,47 @@
 
 Portable AI Hub for Laravel. No vendor lock-in, no heavy SDK. This package exports files (stubs) into your Laravel app and lets you manage them via Composer commands.
 
+## Quick Start (OpenAI in 3 steps)
+
+1) Install as a dev dependency and allow the Composer plugin
+```
+composer config allow-plugins.debjit/php-ai-hub true
+composer require --dev debjit/php-ai-hub
+```
+
+2) Scaffold OpenAI provider files into your app
+```
+composer ai-hub:add openai
+```
+
+3) Set env and run the example
+Add to your .env:
+```
+AI_HUB_PROVIDER=openai
+OPENAI_API_KEY=sk-your-openai-key
+OPENAI_API_BASE=https://api.openai.com
+OPENAI_API_MODEL=gpt-4o-mini
+```
+
+Now run either:
+```
+# Artisan example (after registering the example command as shown below)
+php artisan ai:example
+
+# Or hit the demo route (after adding the route shown below)
+GET /ai-example
+```
+This shows end-to-end working with minimal setup. Swap to Anthropic later with `composer ai-hub:remove openai && composer ai-hub:add anthropic` and update env keys accordingly.
+
 ## Key Changes
 
 - Installed as a dev package and used as a Composer Plugin (no default Laravel service provider).
 - Provides Composer-level commands:
   - `composer ai-hub:clean` — removes AI Hub files from your app.
   - `composer ai-hub:reset` — cleans and re-publishes the default stubs into your app.
-- Ships with stubs for OpenAI (default) and Anthropic, and shared contracts/utilities.
+  - `composer ai-hub:add {provider} [--force|-f] [--tests|-t]` — add/scaffold a provider’s files into your app from stubs.
+  - `composer ai-hub:remove {provider} [--force|-f]` — remove a provider’s scaffolded files from your app.
+- Ships with stubs for OpenAI and Anthropic, plus shared contracts/utilities. There is no default provider; you must explicitly add one.
 
 ## Requirements
 
@@ -53,6 +87,40 @@ Notes:
 
 Run Composer commands from your Laravel project root:
 
+### 1) Add a provider first (required)
+
+There is no default provider. Install one explicitly so you can copy-paste and run immediately.
+
+OpenAI (recommended to start):
+```
+# Install provider files into your app
+composer ai-hub:add openai
+
+# Set env variables (example)
+# Add these to your .env
+AI_HUB_PROVIDER=openai
+OPENAI_API_KEY=sk-your-openai-key
+OPENAI_API_BASE=https://api.openai.com
+OPENAI_API_MODEL=gpt-4o-mini
+```
+
+Anthropic:
+```
+# Install provider files into your app
+composer ai-hub:add anthropic
+
+# Set env variables (example)
+# Add these to your .env
+AI_HUB_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-your-anthropic-key
+ANTHROPIC_API_BASE=https://api.anthropic.com
+ANTHROPIC_API_MODEL=claude-3-5-sonnet-latest
+```
+
+After adding a provider and env vars, you can use the quick-start examples below.
+
+### 2) Clean
+
 ### Clean
 
 Removes all exported AI Hub files from your app.
@@ -67,7 +135,7 @@ This deletes:
 
 ### Reset
 
-Cleans and restores the default AI Hub files (stubs) into your app.
+Cleans your app’s AI Hub directories and restores only the shared scaffolding (no provider).
 
 ```
 composer ai-hub:reset
@@ -75,14 +143,56 @@ composer ai-hub:reset
 
 What it does:
 - Removes `config/ai-hub/` and `app/AIHub/`
-- Copies defaults into your project from this package:
+- Copies shared scaffolding into your project from this package:
   - Shared app stubs: `stubs/shared/app` ➜ `app/`
-  - Default provider (OpenAI) app stubs: `stubs/providers/openai/app` ➜ `app/`
-  - Default provider configs: `stubs/providers/openai/config/ai-hub` ➜ `config/ai-hub/`
+- Does NOT install any provider by default. After reset, you must add a provider explicitly (see next section).
 
-If you prefer Anthropic as default, you can manually copy from:
-- `stubs/providers/anthropic/app/AIHub` ➜ `app/AIHub`
-- `stubs/providers/anthropic/config/ai-hub` ➜ `config/ai-hub`
+### Add a provider (scaffold into your app)
+
+Installs provider-specific files from stubs into your app. Supports: `openai`, `anthropic`.
+
+```
+composer ai-hub:add openai
+composer ai-hub:add anthropic
+```
+
+Options:
+- `--force` / `-f`: overwrite existing files.
+- `--tests` / `-t`: also copy tests if present under the provider stubs.
+
+What is copied (if present for the provider):
+- App code: `stubs/providers/{provider}/app/AIHub` ➜ `app/AIHub`
+- Configs: `stubs/providers/{provider}/config/ai-hub` ➜ `config/ai-hub`
+- Shared layer (only if missing or when forcing): `stubs/shared/app/AIHub` ➜ `app/AIHub`
+- Optionally tests: `stubs/providers/{provider}/tests` ➜ `tests`
+
+A lightweight registry file `ai-hub.json` in your project root tracks installed providers.
+
+### Remove a provider
+
+Removes provider-specific files previously scaffolded.
+
+```
+composer ai-hub:remove openai
+composer ai-hub:remove anthropic
+```
+
+Options:
+- `--force` / `-f`: skip the confirmation prompt.
+
+What is removed:
+- Provider config: `config/ai-hub/{provider}.php`
+- Provider app files mirrored from this package’s stubs for that provider (detected dynamically)
+- Then any now-empty directories under `app/AIHub` and `config/ai-hub` are cleaned up
+
+Shared config `config/ai-hub/ai-hub.php` is NOT removed.
+
+After a reset, pick and add your provider explicitly, e.g.:
+```
+composer ai-hub:add openai
+# or
+composer ai-hub:add anthropic
+```
 
 ## Quick Start Test (copy-paste)
 
@@ -181,14 +291,34 @@ Notes:
 - The `App\AIHub\ChatClient` and `ConfigResolver` classes come from the exported stubs and may perform simple HTTP calls via `App\AIHub\Connectors\HttpConnector`.
 - The example uses static strings to make copy-paste testing trivial.
 
-## Managing Providers
+## Available Providers
 
-This package includes helper commands for managing providers (optional if you want to automate provider switching):
+Out of the box providers (must be explicitly installed):
+- openai
+- anthropic
 
-- `PhpAiHub\Console\AddProviderCommand`
-- `PhpAiHub\Console\RemoveProviderCommand`
+You can inspect the shipped stubs to see exactly what will be copied:
 
-If you want to use these as Artisan commands, you can wire them in your app. By default, the Composer commands (`ai-hub:clean` / `ai-hub:reset`) are the primary interface.
+```
+stubs/
+  shared/
+    app/AIHub/...
+    config/ai-hub/...
+  providers/
+    openai/
+      app/AIHub/...
+      config/ai-hub/ai-hub.php
+      config/ai-hub/openai.php
+    anthropic/
+      app/AIHub/AnthropicProvider.php
+      config/ai-hub/anthropic.php
+```
+
+Provider management is handled via Composer commands listed above. Internally, the plugin registers command classes:
+- Add: `PhpAiHub\Package\Console\AddProviderCommand` (composer name: `ai-hub:add`)
+- Remove: `PhpAiHub\Package\Console\RemoveProviderCommand` (composer name: `ai-hub:remove`)
+- Clean: `PhpAiHub\Composer\Commands\CleanComposerCommand` (composer name: `ai-hub:clean`)
+- Reset: `PhpAiHub\Composer\Commands\ResetComposerCommand` (composer name: `ai-hub:reset`)
 
 ## Project Structure (exported into your app)
 
