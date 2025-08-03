@@ -13,7 +13,7 @@ Portable AI Hub for Laravel. No vendor lock-in, no heavy SDK. This package expor
 ## Requirements
 
 - PHP 8.2+
-- Laravel 10 or above (for the app consuming the stubs)
+- Laravel 10+ (for the app consuming the stubs)
 - Composer 2.2+ (Composer plugin API v2.2)
 - Allow this plugin in Composer config
 
