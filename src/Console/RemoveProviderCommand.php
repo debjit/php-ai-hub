@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpAiHub\Package\Console;
+namespace PhpAiHub\Console;
 
 use Composer\Command\BaseCommand;
 use Symfony\Component\Console\Input\InputArgument;
