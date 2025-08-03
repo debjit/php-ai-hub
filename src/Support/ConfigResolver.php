@@ -30,7 +30,8 @@ final class ConfigResolver
     {
         // Prefer Laravel's config() helper if present
         if (\function_exists('config')) {
-            $val = \config($this->root . '.' . $key);
+            $config = 'config';
+            $val = $config($this->root . '.' . $key);
             if ($val !== null) {
                 return $val;
             }
@@ -95,25 +96,15 @@ final class ConfigResolver
 
     private function resolveOpenAI(): array
     {
-        // This logic should mirror config/ai-hub/openai.php to support non-Laravel envs
-        $apiKey = $this->get('openai.api_key', getenv('AI_OPENAI_API_KEY') ?: getenv('OPENAI_API_KEY'));
-        $baseUrl = $this->get('openai.base_url', getenv('AI_OPENAI_BASE_URL') ?: getenv('OPENAI_BASE_URL'));
-        $organization = $this->get('openai.organization', getenv('AI_OPENAI_ORG') ?: getenv('OPENAI_ORG'));
-        $model = $this->get('openai.model') ?: getenv('OPENAI_MODEL') ?: 'gpt-4o-mini';
-
-        $headers = $this->decodeHeaders(
-            $this->get('openai.headers', getenv('AI_OPENAI_HEADERS') ?: getenv('OPENAI_HEADERS'))
-        );
-        $timeout = (int) $this->get('openai.timeout', getenv('AI_OPENAI_TIMEOUT') ?: getenv('OPENAI_TIMEOUT') ?: 60);
-
+        // Mirror config/ai-hub/openai.php; avoid duplicating getenv fallbacks here.
         return [
-            'api_key' => (string) $apiKey,
-            'organization' => (string) $organization,
-            'model' => (string) $model,
-            'base_url' => rtrim((string) ($baseUrl ?: 'https://api.openai.com/v1'), '/'),
-            'timeout' => $timeout,
-            'headers' => $headers,
-            'chat_path' => (string) $this->get('openai.chat_path', '/chat/completions'),
+            'api_key' => (string) $this->get('openai.api_key'),
+            'organization' => (string) $this->get('openai.organization'),
+            'model' => (string) $this->get('openai.model'),
+            'base_url' => rtrim((string) ($this->get('openai.base_url') ?: 'https://api.openai.com/v1'), '/'),
+            'timeout' => (int) ($this->get('openai.timeout') ?: 60),
+            'headers' => $this->decodeHeaders($this->get('openai.headers', '')),
+            'chat_path' => (string) ($this->get('openai.chat_path') ?: '/chat/completions'),
             'default_headers' => (array) $this->get('openai.default_headers', [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
@@ -123,23 +114,14 @@ final class ConfigResolver
 
     private function resolveAnthropic(): array
     {
-        // This logic should mirror config/ai-hub/anthropic.php to support non-Laravel envs
-        $apiKey = $this->get('anthropic.api_key', getenv('AI_ANTHROPIC_API_KEY') ?: getenv('ANTHROPIC_API_KEY'));
-        $baseUrl = $this->get('anthropic.base_url', getenv('AI_ANTHROPIC_BASE_URL') ?: getenv('ANTHROPIC_BASE_URL'));
-        $model = $this->get('anthropic.model') ?: getenv('ANTHROPIC_MODEL') ?: 'claude-3-5-sonnet';
-
-        $headers = $this->decodeHeaders(
-            $this->get('anthropic.headers', getenv('AI_ANTHROPIC_HEADERS') ?: getenv('ANTHROPIC_HEADERS'))
-        );
-        $timeout = (int) $this->get('anthropic.timeout', getenv('AI_ANTHROPIC_TIMEOUT') ?: getenv('ANTHROPIC_TIMEOUT') ?: 60);
-
+        // Mirror config/ai-hub/anthropic.php; avoid duplicating getenv fallbacks here.
         return [
-            'api_key' => (string) $apiKey,
-            'model' => (string) $model,
-            'base_url' => rtrim((string) ($baseUrl ?: 'https://api.anthropic.com'), '/'),
-            'timeout' => $timeout,
-            'headers' => $headers,
-            'messages_path' => (string) $this->get('anthropic.messages_path', '/v1/messages'),
+            'api_key' => (string) $this->get('anthropic.api_key'),
+            'model' => (string) ($this->get('anthropic.model') ?: 'claude-3-5-sonnet'),
+            'base_url' => rtrim((string) ($this->get('anthropic.base_url') ?: 'https://api.anthropic.com'), '/'),
+            'timeout' => (int) ($this->get('anthropic.timeout') ?: 60),
+            'headers' => $this->decodeHeaders($this->get('anthropic.headers', '')),
+            'messages_path' => (string) ($this->get('anthropic.messages_path') ?: '/v1/messages'),
             'default_headers' => (array) $this->get('anthropic.default_headers', [
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
