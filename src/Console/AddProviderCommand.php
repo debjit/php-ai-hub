@@ -20,7 +20,7 @@ final class AddProviderCommand extends BaseCommand
     protected function configure(): void
     {
         $this
-            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)');
+            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

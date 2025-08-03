@@ -32,7 +32,7 @@ php artisan ai:example
 # Or hit the demo route (after adding the route shown below)
 GET /ai-example
 ```
-This shows end-to-end working with minimal setup. Swap to Anthropic later with `composer ai-hub:remove openai && composer ai-hub:add anthropic` and update env keys accordingly.
+This shows end-to-end working with minimal setup.
 
 ## Key Changes
 
@@ -42,7 +42,7 @@ This shows end-to-end working with minimal setup. Swap to Anthropic later with `
   - `composer ai-hub:reset` — cleans and re-publishes the default stubs into your app.
   - `composer ai-hub:add {provider} [--force|-f] [--tests|-t]` — add/scaffold a provider’s files into your app from stubs.
   - `composer ai-hub:remove {provider} [--force|-f]` — remove a provider’s scaffolded files from your app.
-- Ships with stubs for OpenAI and Anthropic, plus shared contracts/utilities. There is no default provider; you must explicitly add one.
+- Ships with stubs for OpenAI, plus shared contracts/utilities. There is no default provider; you must explicitly add one.
 
 ## Requirements
 
@@ -104,19 +104,6 @@ OPENAI_API_BASE=https://api.openai.com
 OPENAI_API_MODEL=gpt-4o-mini
 ```
 
-Anthropic:
-```
-# Install provider files into your app
-composer ai-hub:add anthropic
-
-# Set env variables (example)
-# Add these to your .env
-AI_HUB_PROVIDER=anthropic
-ANTHROPIC_API_KEY=sk-your-anthropic-key
-ANTHROPIC_API_BASE=https://api.anthropic.com
-ANTHROPIC_API_MODEL=claude-3-5-sonnet-latest
-```
-
 After adding a provider and env vars, you can use the quick-start examples below.
 
 ### 2) Clean
@@ -149,11 +136,10 @@ What it does:
 
 ### Add a provider (scaffold into your app)
 
-Installs provider-specific files from stubs into your app. Supports: `openai`, `anthropic`.
+Installs provider-specific files from stubs into your app. Supports: `openai`.
 
 ```
 composer ai-hub:add openai
-composer ai-hub:add anthropic
 ```
 
 Options:
@@ -174,7 +160,6 @@ Removes provider-specific files previously scaffolded.
 
 ```
 composer ai-hub:remove openai
-composer ai-hub:remove anthropic
 ```
 
 Options:
@@ -190,8 +175,6 @@ Shared config `config/ai-hub/ai-hub.php` is NOT removed.
 After a reset, pick and add your provider explicitly, e.g.:
 ```
 composer ai-hub:add openai
-# or
-composer ai-hub:add anthropic
 ```
 
 ## Quick Start Test (copy-paste)
@@ -295,7 +278,6 @@ Notes:
 
 Out of the box providers (must be explicitly installed):
 - openai
-- anthropic
 
 You can inspect the shipped stubs to see exactly what will be copied:
 
@@ -309,9 +291,6 @@ stubs/
       app/AIHub/...
       config/ai-hub/ai-hub.php
       config/ai-hub/openai.php
-    anthropic/
-      app/AIHub/AnthropicProvider.php
-      config/ai-hub/anthropic.php
 ```
 
 Provider management is handled via Composer commands listed above. Internally, the plugin registers command classes:

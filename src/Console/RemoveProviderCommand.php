@@ -20,7 +20,7 @@ final class RemoveProviderCommand extends BaseCommand
     protected function configure(): void
     {
         $this
-            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)')
+            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai)')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Skip confirmation prompt');
     }
 

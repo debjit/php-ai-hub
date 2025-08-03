@@ -9,7 +9,7 @@ return [
     |
     | This option controls the default AI driver used by the library.
     |
-    | Supported: "openai", "anthropic"
+    | Supported: "openai"
     |
     */
 

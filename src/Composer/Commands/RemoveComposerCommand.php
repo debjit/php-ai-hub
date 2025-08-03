@@ -21,7 +21,7 @@ final class RemoveComposerCommand extends BaseCommand
         $this
             ->setName('ai-hub:remove')
             ->setDescription("Remove an AI provider's published files from your Laravel app.")
-            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)')
+            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai)')
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Skip confirmation prompt');
     }
 
