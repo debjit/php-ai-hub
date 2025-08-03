@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PhpAiHub\Package\Composer;
+namespace PhpAiHub\Composer;
 
 use Composer\Composer;
 use Composer\IO\IOInterface;
