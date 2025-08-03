@@ -280,7 +280,7 @@ Route::get('/ai-example', function () {
     $response = $client->chat($messages);
 
     // Return plain text for quick verification
-    return response((string) $response, 200, ['Content-Type' => 'text/plain']);
+    return response((string) $response['body']['choices'][0]['message']['content'], 200, ['Content-Type' => 'text/plain']);
 });
 ```
 
