@@ -32,7 +32,7 @@ final class ChatClient
 
         // Build payload with sane defaults; allow user overrides to merge in
         $payload = array_merge([
-            'model' => $options['model'] ?? ($options['default_model'] ?? 'gpt-4o-mini'),
+            'model' => $options['model'] ?? $cfg['model'],
             'messages' => $messages,
             // Common OpenAI options - caller can override via $options['payload'] if needed
             'temperature' => 0.7,

@@ -99,7 +99,7 @@ final class ConfigResolver
         $apiKey = $this->get('openai.api_key', getenv('AI_OPENAI_API_KEY') ?: getenv('OPENAI_API_KEY'));
         $baseUrl = $this->get('openai.base_url', getenv('AI_OPENAI_BASE_URL') ?: getenv('OPENAI_BASE_URL'));
         $organization = $this->get('openai.organization', getenv('AI_OPENAI_ORG') ?: getenv('OPENAI_ORG'));
-        $model = $this->get('openai.model', getenv('AI_OPENAI_MODEL') ?: getenv('OPENAI_MODEL'));
+        $model = $this->get('openai.model') ?: getenv('OPENAI_MODEL') ?: 'gpt-4o-mini';
 
         $headers = $this->decodeHeaders(
             $this->get('openai.headers', getenv('AI_OPENAI_HEADERS') ?: getenv('OPENAI_HEADERS'))
@@ -109,7 +109,7 @@ final class ConfigResolver
         return [
             'api_key' => (string) $apiKey,
             'organization' => (string) $organization,
-            'model' => (string) ($model ?: 'gpt-4o-mini'),
+            'model' => (string) $model,
             'base_url' => rtrim((string) ($baseUrl ?: 'https://api.openai.com/v1'), '/'),
             'timeout' => $timeout,
             'headers' => $headers,
@@ -126,7 +126,7 @@ final class ConfigResolver
         // This logic should mirror config/ai-hub/anthropic.php to support non-Laravel envs
         $apiKey = $this->get('anthropic.api_key', getenv('AI_ANTHROPIC_API_KEY') ?: getenv('ANTHROPIC_API_KEY'));
         $baseUrl = $this->get('anthropic.base_url', getenv('AI_ANTHROPIC_BASE_URL') ?: getenv('ANTHROPIC_BASE_URL'));
-        $model = $this->get('anthropic.model', getenv('AI_ANTHROPIC_MODEL') ?: getenv('ANTHROPIC_MODEL'));
+        $model = $this->get('anthropic.model') ?: getenv('ANTHROPIC_MODEL') ?: 'claude-3-5-sonnet';
 
         $headers = $this->decodeHeaders(
             $this->get('anthropic.headers', getenv('AI_ANTHROPIC_HEADERS') ?: getenv('ANTHROPIC_HEADERS'))
@@ -135,7 +135,7 @@ final class ConfigResolver
 
         return [
             'api_key' => (string) $apiKey,
-            'model' => (string) ($model ?: 'claude-3-5-sonnet'),
+            'model' => (string) $model,
             'base_url' => rtrim((string) ($baseUrl ?: 'https://api.anthropic.com'), '/'),
             'timeout' => $timeout,
             'headers' => $headers,
