@@ -48,7 +48,7 @@ This shows end-to-end working with minimal setup. Swap to Anthropic later with `
 
 - PHP 8.2+
 - Laravel 10+ (for the app consuming the stubs)
-- Composer 2.2+ (Composer plugin API v2.2)
+- Composer 2.x (Composer plugin API ^2.0, runtime API ^2.2)
 - Allow this plugin in Composer config
 
 ## Installation (DEV ONLY)
@@ -352,7 +352,7 @@ This code is your app code — edit freely.
 
 - Composer plugin not running:
   - Ensure you have: `composer config allow-plugins.debjit/php-ai-hub true`
-  - Ensure Composer 2.2+ is installed.
+- Ensure Composer 2.x is installed (plugin API ^2.0, runtime API ^2.2).
 - LSP/Intelephense errors in vendor context are harmless; commands execute via Composer.
 - Windows paths: The commands compute project root via `getcwd()`; run from your project root.
 
