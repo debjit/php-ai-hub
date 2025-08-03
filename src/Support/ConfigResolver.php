@@ -69,10 +69,6 @@ final class ConfigResolver
             return $this->resolveOpenAI();
         }
 
-        if ($driver === 'anthropic') {
-            return $this->resolveAnthropic();
-        }
-
         // Unknown driver -> return empty config
         return [];
     }
@@ -112,22 +108,6 @@ final class ConfigResolver
         ];
     }
 
-    private function resolveAnthropic(): array
-    {
-        // Mirror config/ai-hub/anthropic.php; avoid duplicating getenv fallbacks here.
-        return [
-            'api_key' => (string) $this->get('anthropic.api_key'),
-            'model' => (string) ($this->get('anthropic.model') ?: 'claude-3-5-sonnet'),
-            'base_url' => rtrim((string) ($this->get('anthropic.base_url') ?: 'https://api.anthropic.com'), '/'),
-            'timeout' => (int) ($this->get('anthropic.timeout') ?: 60),
-            'headers' => $this->decodeHeaders($this->get('anthropic.headers', '')),
-            'messages_path' => (string) ($this->get('anthropic.messages_path') ?: '/v1/messages'),
-            'default_headers' => (array) $this->get('anthropic.default_headers', [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ]),
-        ];
-    }
 
     /**
      * Convert a config key path to a conventional env var.

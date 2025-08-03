@@ -70,8 +70,6 @@ final class RemoveProviderCommand extends BaseCommand
                 $filesToRemove[] = Path::join($appAiHub, 'OpenAIProvider.php');
                 $filesToRemove[] = Path::join($appAiHub, 'ChatClient.php');
                 $filesToRemove[] = Path::join($appAiHub, 'Connectors', 'HttpConnector.php');
-            } elseif ($provider === 'anthropic') {
-                $filesToRemove[] = Path::join($appAiHub, 'AnthropicProvider.php');
             }
         }
 
