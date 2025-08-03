@@ -10,5 +10,5 @@ return [
     ],
     'chat_path' => env('AI_OPENAI_CHAT_PATH', '/chat/completions'),
     'timeout' => env('AI_OPENAI_TIMEOUT', 60),
-    'default_model' => env('AI_OPENAI_DEFAULT_MODEL', 'gpt-4o-mini'),
+    'model' => env('AI_OPENAI_DEFAULT_MODEL', 'gpt-4o-mini'),
 ];
