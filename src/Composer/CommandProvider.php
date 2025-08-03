@@ -7,7 +7,7 @@ namespace PhpAiHub\Composer;
 use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
 use PhpAiHub\Composer\Commands\CleanComposerCommand;
 use PhpAiHub\Composer\Commands\ResetComposerCommand;
-use PhpAiHub\Composer\Commands\AddComposerCommand;
+use PhpAiHub\Console\AddProviderCommand;
 use PhpAiHub\Composer\Commands\RemoveComposerCommand;
 
 /**
@@ -20,7 +20,7 @@ final class CommandProvider implements CommandProviderCapability
         return [
             new CleanComposerCommand(),
             new ResetComposerCommand(),
-            new AddComposerCommand(),
+            new AddProviderCommand(),
             new RemoveComposerCommand(),
         ];
     }
