@@ -15,21 +15,19 @@ use Symfony\Component\Filesystem\Path;
 final class AddProviderCommand extends BaseCommand
 {
     protected static $defaultName = 'ai-hub:add';
-    protected static $defaultDescription = 'Install/copy an AI provider\'s source code into your Laravel app (like shadcn).';
+    protected static $defaultDescription = 'Install/copy an AI provider\'s source code into your Laravel app.';
 
     protected function configure(): void
     {
         $this
-            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)')
-            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Overwrite existing files')
-            ->addOption('tests', 't', InputOption::VALUE_NONE, 'Copy tests if present in stubs');
+            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $provider = strtolower((string) $input->getArgument('provider'));
-        $force = (bool) $input->getOption('force');
-        $withTests = (bool) $input->getOption('tests');
+        $force = false;
+        $withTests = false;
 
         $io = $this->getIO();
         $fs = new Filesystem();
@@ -56,12 +54,12 @@ final class AddProviderCommand extends BaseCommand
         $fs->mkdir([$appAiHub, $configDir]);
 
         // Copy common files if exist (shared between providers)
-        $this->copyIfExists($fs, Path::join($packageRoot, 'stubs', 'shared', 'app', 'AIHub'), $appAiHub, $force, $io);
-        $this->copyIfExists($fs, Path::join($packageRoot, 'stubs', 'shared', 'config', 'ai-hub'), $configDir, $force, $io);
+        $this->copyIfExists($fs, Path::join($packageRoot, 'stubs', 'shared', 'app', 'AIHub'), $appAiHub, false, $io);
+        $this->copyIfExists($fs, Path::join($packageRoot, 'stubs', 'shared', 'config', 'ai-hub'), $configDir, false, $io);
 
         // Copy provider files
-        $this->copyIfExists($fs, Path::join($stubsDir, 'app', 'AIHub'), $appAiHub, $force, $io);
-        $this->copyIfExists($fs, Path::join($stubsDir, 'config', 'ai-hub'), $configDir, $force, $io);
+        $this->copyIfExists($fs, Path::join($stubsDir, 'app', 'AIHub'), $appAiHub, false, $io);
+        $this->copyIfExists($fs, Path::join($stubsDir, 'config', 'ai-hub'), $configDir, false, $io);
 
         // Copy tests optionally
         if ($withTests) {

@@ -20,10 +20,8 @@ final class AddComposerCommand extends BaseCommand
     {
         $this
             ->setName('ai-hub:add')
-            ->setDescription('Install/copy an AI provider\'s source code into your Laravel app (like shadcn).')
-            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)')
-            ->addOption('force', 'f', InputOption::VALUE_NONE, 'Overwrite existing files')
-            ->addOption('tests', 't', InputOption::VALUE_NONE, 'Copy tests if present in stubs');
+            ->setDescription('Install/copy an AI provider\'s source code into your Laravel app.')
+            ->addArgument('provider', InputArgument::REQUIRED, 'Provider name (e.g. openai, anthropic)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
