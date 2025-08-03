@@ -19,6 +19,20 @@ final class CleanComposerCommand extends BaseCommand
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $output->writeln('<comment>This will permanently remove:</comment>');
+        $output->writeln('- config/ai-hub directory');
+        $output->writeln('- app/AIHub directory');
+        $output->writeln('- ai-hub.json file (if present)');
+        $output->writeln('');
+
+        // Simple confirmation prompt using STDIN since we are inside composer command
+        $output->writeln('<question>Do you really want to proceed? [y/N]</question>');
+        $confirm = strtolower(trim((string) fgets(STDIN)));
+        if ($confirm !== 'y' && $confirm !== 'yes') {
+            $output->writeln('<info>Clean cancelled.</info>');
+            return 0;
+        }
+
         $output->writeln('<info>Removing AI Hub files...</info>');
 
         $fs = new Filesystem();
@@ -26,9 +40,14 @@ final class CleanComposerCommand extends BaseCommand
         $projectRoot = getcwd() ?: '.';
         $configDir = $projectRoot . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ai-hub';
         $appAiHubDir = $projectRoot . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'AIHub';
+        $aiHubJson = $projectRoot . DIRECTORY_SEPARATOR . 'ai-hub.json';
 
         try {
-            $fs->remove([$configDir, $appAiHubDir]);
+            $paths = [$configDir, $appAiHubDir];
+            if ($fs->exists($aiHubJson)) {
+                $paths[] = $aiHubJson;
+            }
+            $fs->remove($paths);
             $output->writeln('<info>AI Hub files removed.</info>');
             return 0;
         } catch (\Throwable $e) {
