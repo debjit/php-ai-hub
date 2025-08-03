@@ -8,6 +8,9 @@ use Composer\Plugin\Capability\CommandProvider as CommandProviderCapability;
 use PhpAiHub\Composer\Commands\CleanComposerCommand;
 use PhpAiHub\Composer\Commands\ResetComposerCommand;
 
+/**
+ * Composer 2-only command provider.
+ */
 final class CommandProvider implements CommandProviderCapability
 {
     public function getCommands(): array

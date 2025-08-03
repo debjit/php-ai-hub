@@ -29,6 +29,7 @@ final class AIHubPlugin implements PluginInterface, Capable
 
     public function getCapabilities(): array
     {
+        // Composer 2-only: advertise the CommandProvider capability
         return [
             CommandProviderCapability::class => CommandProvider::class,
         ];
