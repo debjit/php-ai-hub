@@ -42,7 +42,7 @@ This shows end-to-end working with minimal setup.
   - `composer ai-hub:reset` — cleans and re-publishes the default stubs into your app.
   - `composer ai-hub:add {provider} [--force|-f] [--tests|-t]` — add/scaffold a provider’s files into your app from stubs.
   - `composer ai-hub:remove {provider} [--force|-f]` — remove a provider’s scaffolded files from your app.
-- Ships with stubs for OpenAI, plus shared contracts/utilities. There is no default provider; you must explicitly add one.
+- Ships with provider-agnostic shared stubs plus provider-specific stubs (e.g., OpenAI). Shared stubs are installed first; provider stubs layer on top. There is no default provider; you must explicitly add one.
 
 ## Requirements
 
@@ -132,6 +132,7 @@ What it does:
 - Removes `config/ai-hub/` and `app/AIHub/`
 - Copies shared scaffolding into your project from this package:
   - Shared app stubs: `stubs/shared/app` ➜ `app/`
+  - Shared config stubs: `stubs/shared/config/ai-hub` ➜ `config/ai-hub`
 - Does NOT install any provider by default. After reset, you must add a provider explicitly (see next section).
 
 ### Add a provider (scaffold into your app)
@@ -146,11 +147,15 @@ Options:
 - `--force` / `-f`: overwrite existing files.
 - `--tests` / `-t`: also copy tests if present under the provider stubs.
 
-What is copied (if present for the provider):
-- App code: `stubs/providers/{provider}/app/AIHub` ➜ `app/AIHub`
-- Configs: `stubs/providers/{provider}/config/ai-hub` ➜ `config/ai-hub`
-- Shared layer (only if missing or when forcing): `stubs/shared/app/AIHub` ➜ `app/AIHub`
-- Optionally tests: `stubs/providers/{provider}/tests` ➜ `tests`
+What is copied (in order):
+1) Shared layer (always first):
+   - `stubs/shared/app/AIHub` ➜ `app/AIHub`
+   - `stubs/shared/config/ai-hub` ➜ `config/ai-hub`
+2) Provider-specific layer (overrides if present):
+   - `stubs/providers/{provider}/app/AIHub` ➜ `app/AIHub`
+   - `stubs/providers/{provider}/config/ai-hub` ➜ `config/ai-hub`
+3) Optionally tests:
+   - `stubs/providers/{provider}/tests` ➜ `tests`
 
 A lightweight registry file `ai-hub.json` in your project root tracks installed providers.
 
@@ -179,7 +184,7 @@ composer ai-hub:add openai
 
 ## Quick Start Test (copy-paste)
 
-After running `composer ai-hub:reset`, copy-paste these examples into your Laravel app to verify everything works. These use static code and the exported classes.
+After running `composer ai-hub:reset` (shared layer only) and then `composer ai-hub:add openai` (provider layer), copy-paste these examples into your Laravel app to verify everything works. These use the exported shared HttpConnector and AiChatService.
 
 1) Example Artisan Command
 
@@ -191,32 +196,30 @@ Create file: `app/Console/Commands/AiHubExampleCommand.php`
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\AIHub\ChatClient;
+use App\AIHub\Services\AiChatService;
 use App\AIHub\Connectors\HttpConnector;
 
 class AiHubExampleCommand extends Command
 {
     protected $signature = 'ai:example';
-    protected $description = 'Test AI Hub ChatClient with a static prompt';
+    protected $description = 'Test AI Hub AiChatService with a static prompt';
 
     public function handle(): int
     {
         $this->info('Running AI Hub example...');
 
-        // The HttpConnector will resolve config from your .env or config/ai-hub files
+        // Uses shared HttpConnector and resolves config from .env or config/ai-hub
         $http = new HttpConnector();
-
-        // Create the ChatClient
-        $client = new ChatClient($http);
+        $chat = new AiChatService($http);
 
         // Static prompt for testing
         $messages = [['role' => 'user', 'content' => 'Say hello in one short sentence.']];
 
-        // Perform a static chat request
-        $response = $client->chat($messages);
+        // Perform a chat request via shared AiChatService
+        $response = $chat->chat($messages);
 
         $this->line('Response:');
-        $this->line((string) $response);
+        $this->line((string) ($response['body']['choices'][0]['message']['content'] ?? $response['raw'] ?? ''));
 
         $this->info('Done.');
         return self::SUCCESS;
@@ -246,33 +249,31 @@ Add to `routes/web.php`:
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\AIHub\ChatClient;
+use App\AIHub\Services\AiChatService;
 use App\AIHub\Connectors\HttpConnector;
 
 Route::get('/ai-example', function () {
-    // The HttpConnector will resolve config from your .env or config/ai-hub files
+    // Uses shared HttpConnector and AiChatService
     $http = new HttpConnector();
-
-    // Create the ChatClient
-    $client = new ChatClient($http);
+    $chat = new AiChatService($http);
 
     // Static prompt for demo
     $messages = [['role' => 'user', 'content' => 'Return a JSON object: {"hello":"world"}']];
 
     // Perform a chat request
-    $response = $client->chat($messages);
+    $response = $chat->chat($messages);
 
     // Return plain text for quick verification
-    return response((string) $response['body']['choices'][0]['message']['content'], 200, ['Content-Type' => 'text/plain']);
+    return response((string) ($response['body']['choices'][0]['message']['content'] ?? $response['raw'] ?? ''), 200, ['Content-Type' => 'text/plain']);
 });
 ```
 
 Visit: http://localhost:8000/ai-example (or your app URL)
 
 Notes:
-- The default config is under `config/ai-hub/`. Ensure appropriate environment variables (e.g., OPENAI_API_KEY) if your stub/provider requires them.
-- The `App\AIHub\ChatClient` and `HttpConnector` classes come from the exported stubs.
-- The example uses static strings to make copy-paste testing trivial.
+- The default config is under `config/ai-hub/`. Ensure appropriate environment variables (e.g., OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL).
+- The `App\AIHub\Connectors\HttpConnector` and `App\AIHub\Services\AiChatService` are shared stubs and will be present after `reset` and `add`.
+- The example uses the shared AiChatService to demonstrate provider-agnostic usage; provider-specific settings are read from config/env.
 
 ## Available Providers
 
@@ -284,13 +285,19 @@ You can inspect the shipped stubs to see exactly what will be copied:
 ```
 stubs/
   shared/
-    app/AIHub/...
-    config/ai-hub/...
+    app/AIHub/
+      ProviderContract.php
+      Support/ConfigResolver.php
+      Connectors/HttpConnector.php
+      Services/AiChatService.php
+    config/ai-hub/
+      ai-hub.php
   providers/
     openai/
-      app/AIHub/...
-      config/ai-hub/ai-hub.php
-      config/ai-hub/openai.php
+      app/AIHub/
+        OpenAIProvider.php
+      config/ai-hub/
+        openai.php
 ```
 
 Provider management is handled via Composer commands listed above. Internally, the plugin registers command classes:
@@ -301,7 +308,7 @@ Provider management is handled via Composer commands listed above. Internally, t
 
 ## Project Structure (exported into your app)
 
-After `composer ai-hub:reset`, your Laravel app will have:
+After `composer ai-hub:reset`, your Laravel app will have the shared layer only:
 
 ```
 app/
@@ -311,8 +318,26 @@ app/
       ConfigResolver.php
     Connectors/
       HttpConnector.php
+    Services/
+      AiChatService.php
+config/
+  ai-hub/
+    ai-hub.php
+```
+
+After `composer ai-hub:add openai`, provider-specific files are layered on top:
+
+```
+app/
+  AIHub/
+    ProviderContract.php
+    Support/
+      ConfigResolver.php
+    Connectors/
+      HttpConnector.php
+    Services/
+      AiChatService.php
     OpenAIProvider.php
-    ChatClient.php
 config/
   ai-hub/
     ai-hub.php
@@ -325,6 +350,7 @@ This code is your app code — edit freely.
 
 - Keep your app’s AI integration portable and vendor-agnostic.
 - No runtime dependency on SDKs — just simple HTTP connectors and contracts.
+- Shared stubs centralize common code so providers stay lean and do not overwrite each other.
 - Manage the files via Composer for consistent install/reset across environments.
 
 ## Troubleshooting
