@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\AIHub;
+namespace App\AIHub\Services;
 
 use App\AIHub\Connectors\HttpConnector;
 
@@ -12,7 +12,7 @@ use App\AIHub\Connectors\HttpConnector;
  * - Sends POST {base_url}{chat_path} with JSON payload
  * - Supports Bearer token and arbitrary custom headers
  */
-final class ChatClient
+final class AiChatService
 {
     public function __construct(private readonly HttpConnector $http)
     {

@@ -68,7 +68,7 @@ final class RemoveProviderCommand extends BaseCommand
             // Fallback to common expected names for known providers
             if ($provider === 'openai') {
                 $filesToRemove[] = Path::join($appAiHub, 'OpenAIProvider.php');
-                $filesToRemove[] = Path::join($appAiHub, 'ChatClient.php');
+                $filesToRemove[] = Path::join($appAiHub, 'AiChatService.php');
                 $filesToRemove[] = Path::join($appAiHub, 'Connectors', 'HttpConnector.php');
             }
         }
