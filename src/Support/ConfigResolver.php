@@ -65,6 +65,13 @@ final class ConfigResolver
     {
         $driver = strtolower($driver);
 
+        // First try centralized providers.php if present
+        $fromConfig = $this->resolveFromProvidersConfig($driver);
+        if (!empty($fromConfig)) {
+            return $fromConfig;
+        }
+
+        // Back-compat: explicit resolver for built-in openai.php
         if ($driver === 'openai') {
             return $this->resolveOpenAI();
         }
@@ -106,6 +113,70 @@ final class ConfigResolver
                 'Content-Type' => 'application/json',
             ]),
         ];
+    }
+
+    /**
+     * Resolve provider config from centralized config/ai-hub/providers.php if available.
+     * Falls back to environment using conventional AI_{PROVIDER}_* keys when config() is not available.
+     */
+    private function resolveFromProvidersConfig(string $driver): array
+    {
+        $driver = strtolower($driver);
+
+        // If Laravel config() exists, try config('ai-hub.providers.{driver}')
+        if (\function_exists('config')) {
+            $config = 'config';
+            $arr = $config($this->root . '.providers.' . $driver);
+            if (is_array($arr) && !empty($arr)) {
+                // normalize headers possibly being JSON string
+                if (isset($arr['headers'])) {
+                    $arr['headers'] = $this->decodeHeaders($arr['headers']);
+                }
+                // enforce required defaults
+                $arr['base_url'] = rtrim((string) ($arr['base_url'] ?? ''), '/');
+                $arr['timeout'] = (int) ($arr['timeout'] ?? 60);
+                $arr['chat_path'] = (string) ($arr['chat_path'] ?? '/chat/completions');
+                $arr['default_headers'] = (array) ($arr['default_headers'] ?? [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ]);
+                return $arr;
+            }
+        }
+
+        // Non-Laravel context: build from env using AI_{DRIVER}_* variables
+        // Keys we support in providers.php
+        $keys = [
+            'api_key', 'organization', 'model', 'base_url', 'timeout', 'headers', 'chat_path', 'default_headers',
+        ];
+
+        $resolved = [];
+        foreach ($keys as $k) {
+            // Prefer explicit env AI_{DRIVER}_{KEY}
+            $envKey = 'AI_' . strtoupper($driver) . '_' . strtoupper(str_replace('-', '_', $k));
+            $val = getenv($envKey);
+
+            if ($val !== false && $val !== null) {
+                $resolved[$k] = $val;
+            }
+        }
+
+        if (!empty($resolved)) {
+            // Type/format normalization
+            $resolved['base_url'] = rtrim((string) ($resolved['base_url'] ?? ''), '/');
+            $resolved['timeout'] = (int) ($resolved['timeout'] ?? 60);
+            $resolved['headers'] = $this->decodeHeaders($resolved['headers'] ?? '');
+            $resolved['chat_path'] = (string) ($resolved['chat_path'] ?? '/chat/completions');
+            $resolved['default_headers'] = is_array($resolved['default_headers'] ?? null)
+                ? $resolved['default_headers']
+                : [
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ];
+            return $resolved;
+        }
+
+        return [];
     }
 
 

@@ -2,7 +2,7 @@
 
 Portable AI Hub for Laravel. No vendor lock-in, no heavy SDK. This package exports files (stubs) into your Laravel app and lets you manage them via Composer commands.
 
-## Quick Start (OpenAI in 3 steps)
+## Quick Start (OpenAI-compatible in 3 steps)
 
 1) Install as a dev dependency and allow the Composer plugin
 ```
@@ -16,12 +16,29 @@ composer ai-hub:add openai
 ```
 
 3) Set env and run the example
-Add to your .env:
+Add to your .env (choose one provider):
 ```
-AI_HUB_PROVIDER=openai
-OPENAI_API_KEY=sk-your-openai-key
-OPENAI_API_BASE=https://api.openai.com
-OPENAI_API_MODEL=gpt-4o-mini
+# Choose one provider:
+AI_HUB_DRIVER=openai
+# AI_HUB_DRIVER=groq
+# AI_HUB_DRIVER=openrouter
+
+# OpenAI
+AI_OPENAI_API_KEY=sk-your-openai-key
+AI_OPENAI_BASE_URL=https://api.openai.com/v1
+AI_OPENAI_MODEL=gpt-4o-mini
+
+# Groq (OpenAI-compatible)
+# AI_GROQ_API_KEY=gsk-your-groq-key
+# AI_GROQ_BASE_URL=https://api.groq.com/openai/v1
+# AI_GROQ_MODEL=llama3-8b-8192
+
+# OpenRouter (OpenAI-compatible)
+# AI_OPENROUTER_API_KEY=sk-or-v1-your-key
+# AI_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# AI_OPENROUTER_MODEL=openrouter/horizon-beta
+# Optional extra headers (JSON):
+# AI_OPENROUTER_HEADERS={"HTTP-Referer":"https://your.app","X-Title":"Your App"}
 ```
 
 Now run either:
@@ -35,6 +52,11 @@ GET /ai-example
 This shows end-to-end working with minimal setup.
 
 ## Key Changes
+
+- New centralized providers config (OpenAI-compatible): `config/ai-hub/providers.php`
+  - Declare multiple providers and switch via `AI_HUB_DRIVER` (e.g., `openai`, `groq`, `openrouter`).
+  - All OpenAI-compatible providers reuse the same `OpenAIProvider` class and differ only by base URL, model, and API key.
+  - Backward compatibility: existing `config/ai-hub/openai.php` remains supported for `openai`.
 
 - Installed as a dev package and used as a Composer Plugin (no default Laravel service provider).
 - Provides Composer-level commands:
@@ -95,13 +117,30 @@ OpenAI (recommended to start):
 ```
 # Install provider files into your app
 composer ai-hub:add openai
+```
 
-# Set env variables (example)
-# Add these to your .env
-AI_HUB_PROVIDER=openai
-OPENAI_API_KEY=sk-your-openai-key
-OPENAI_API_BASE=https://api.openai.com
-OPENAI_API_MODEL=gpt-4o-mini
+Set env variables (example, choose your provider):
+```
+# Switch provider here:
+AI_HUB_DRIVER=openai
+# AI_HUB_DRIVER=groq
+# AI_HUB_DRIVER=openrouter
+
+# OpenAI
+AI_OPENAI_API_KEY=sk-your-openai-key
+AI_OPENAI_BASE_URL=https://api.openai.com/v1
+AI_OPENAI_MODEL=gpt-4o-mini
+
+# Groq
+# AI_GROQ_API_KEY=gsk-your-groq-key
+# AI_GROQ_BASE_URL=https://api.groq.com/openai/v1
+# AI_GROQ_MODEL=llama3-8b-8192
+
+# OpenRouter
+# AI_OPENROUTER_API_KEY=sk-or-v1-your-key
+# AI_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+# AI_OPENROUTER_MODEL=openrouter/horizon-beta
+# AI_OPENROUTER_HEADERS={"HTTP-Referer":"https://your.app","X-Title":"Your App"}
 ```
 
 After adding a provider and env vars, you can use the quick-start examples below.
@@ -277,8 +316,37 @@ Notes:
 
 ## Available Providers
 
-Out of the box providers (must be explicitly installed):
+OpenAI-compatible (drop-in, use OpenAIProvider class):
 - openai
+- groq
+- openrouter
+
+Non-OpenAI-compatible (extendable via custom provider classes):
+- You can add entries under `config/ai-hub/providers.php` with a custom `provider_class` that implements `\App\AIHub\ProviderContract`.
+- Example (Anthropic):
+  - `.env`
+    - `AI_HUB_DRIVER=anthropic`
+    - `AI_ANTHROPIC_API_KEY=sk-your-key`
+    - `AI_ANTHROPIC_BASE_URL=https://api.anthropic.com/v1`
+    - `AI_ANTHROPIC_MODEL=claude-3-5-sonnet-20240620`
+    - `AI_ANTHROPIC_HEADERS={"anthropic-version":"2023-06-01"}`
+  - `config/ai-hub/providers.php`
+    ```php
+    'anthropic' => [
+        'api_key'         => env('AI_ANTHROPIC_API_KEY'),
+        'base_url'        => rtrim(env('AI_ANTHROPIC_BASE_URL', 'https://api.anthropic.com/v1'), '/'),
+        'model'           => env('AI_ANTHROPIC_MODEL', 'claude-3-5-sonnet-20240620'),
+        'timeout'         => (int) env('AI_ANTHROPIC_TIMEOUT', 60),
+        'headers'         => env('AI_ANTHROPIC_HEADERS', ''),
+        'chat_path'       => env('AI_ANTHROPIC_CHAT_PATH', '/messages'),
+        'default_headers' => [
+            'Accept'       => 'application/json',
+            'Content-Type' => 'application/json',
+        ],
+        'provider_class'  => \App\AIHub\AnthropicProvider::class,
+    ],
+    ```
+- Implement the provider class to map your internal request shape to the provider’s API.
 
 You can inspect the shipped stubs to see exactly what will be copied:
 
@@ -307,6 +375,14 @@ Provider management is handled via Composer commands listed above. Internally, t
 - Reset: `PhpAiHub\Composer\Commands\ResetComposerCommand` (composer name: `ai-hub:reset`)
 
 ## Project Structure (exported into your app)
+
+Centralized providers config is now included:
+```
+config/
+  ai-hub/
+    ai-hub.php
+    providers.php           # NEW: centralized OpenAI-compatible providers config
+```
 
 After `composer ai-hub:reset`, your Laravel app will have the shared layer only:
 
@@ -341,7 +417,8 @@ app/
 config/
   ai-hub/
     ai-hub.php
-    openai.php
+    providers.php          # use this to switch between openai/groq/openrouter
+    openai.php             # still supported for back-compat
 ```
 
 This code is your app code — edit freely.
@@ -352,6 +429,38 @@ This code is your app code — edit freely.
 - No runtime dependency on SDKs — just simple HTTP connectors and contracts.
 - Shared stubs centralize common code so providers stay lean and do not overwrite each other.
 - Manage the files via Composer for consistent install/reset across environments.
+
+## Examples for Switching Providers
+
+OpenAI (default)
+```
+AI_HUB_DRIVER=openai
+AI_OPENAI_API_KEY=sk-your-openai-key
+AI_OPENAI_BASE_URL=https://api.openai.com/v1
+AI_OPENAI_MODEL=gpt-4o-mini
+```
+
+Groq (OpenAI-compatible)
+```
+AI_HUB_DRIVER=groq
+AI_GROQ_API_KEY=gsk-your-groq-key
+AI_GROQ_BASE_URL=https://api.groq.com/openai/v1
+AI_GROQ_MODEL=llama3-8b-8192
+```
+
+OpenRouter (OpenAI-compatible)
+```
+AI_HUB_DRIVER=openrouter
+AI_OPENROUTER_API_KEY=sk-or-v1-your-key
+AI_OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+AI_OPENROUTER_MODEL=openrouter/horizon-beta
+# Optional OpenRouter headers (JSON):
+AI_OPENROUTER_HEADERS={"HTTP-Referer":"https://your.app","X-Title":"Your App"}
+```
+
+Non-OpenAI-Compatible (custom provider)
+- Add entry in `config/ai-hub/providers.php` with its own `provider_class`.
+- Implement the provider class to build requests per the provider’s API.
 
 ## Troubleshooting
 
